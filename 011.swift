@@ -32,8 +32,6 @@ What is the greatest product of four adjacent numbers in any direction
 (up, down, left, right, or diagonally) in the 20 * 20 grid?
 */
 
-import Foundation
-
 let tab: [[Int]] = [
 	[ 08, 02, 22, 97, 38, 15, 00, 40, 00, 75, 04, 05, 07, 78, 52, 12, 50, 77, 91, 08, ],
 	[ 49, 49, 99, 40, 17, 81, 18, 57, 60, 87, 17, 40, 98, 43, 69, 48, 04, 56, 62, 00, ],
@@ -80,84 +78,19 @@ let tabTr: [[Int]] = [
 	[ 08, 00, 65, 91, 80, 50, 70, 21, 72, 95, 92, 57, 58, 40, 66, 69, 36, 16, 54, 48, ],
 ]
 
-let lockQ = dispatch_queue_create("ag.rahul.euler.lockq", nil)
-func mutex(block: () -> ()) {
-	dispatch_sync(lockQ, block)
-}
-
-func parallel(count: UInt, block: (UInt) -> ()) {
-	dispatch_apply(count, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), block)
-}
-
-var prodHor = [Int](count: 20, repeatedValue: 0)
-
-parallel(20) {
-	let idx = Int($0)
-	var max = 0
-	for i in 0..<17 {
-		let tmp = tab[idx][i..<i+4].reduce(1, *)
-		max = tmp > max ? tmp : max
-	}
-	mutex {
-		prodHor[idx] = max
-	}
-}
-
-var prodVert = [Int](count: 20, repeatedValue: 0)
-
-parallel(20) {
-	let idx = Int($0)
-	var max = 0
-	for i in 0..<17 {
-		let tmp = tabTr[idx][i..<i+4].reduce(1, *)
-		max = tmp > max ? tmp : max
-	}
-	mutex {
-		prodVert[idx] = max
-	}
-}
-
-var prodDiagDown = [Int](count: 17, repeatedValue: 0)
-
-parallel(17) {
-	let idx = Int($0)
-	var max = 0
-	for i in 0..<17 {
-		let tmp = tab[idx][i] * tab[idx+1][i+1] * tab[idx+2][i+2] * tab[idx+3][i+3]
-		max = tmp > max ? tmp : max
-	}
-	mutex {
-		prodDiagDown[idx] = max
-	}
-}
-
-var prodDiagUp = [Int](count: 17, repeatedValue: 0)
-
-parallel(17) {
-	let idx = Int($0)
-	var max = 0
-	for i in 0..<17 {
-		let tmp = tab[idx+3][i] * tab[idx+2][i+1] * tab[idx+1][i+2] * tab[idx][i+3]
-		max = tmp > max ? tmp : max
-	}
-	mutex {
-		prodDiagUp[idx] = max
-	}
-}
-
 var maxProd = 0
 
-func setMax(arr: [Int], inout max: Int) {
-	for val in arr {
-		if val > max {
-			max = val
+for idx in 0..<20 {
+	for i in 0..<17 {
+		let tmpH = tab[idx][i..<i+4].reduce(1, *),
+		    tmpV = tabTr[idx][i..<i+4].reduce(1, *)
+		maxProd = maxElement([ maxProd, tmpH, tmpV ])
+		if idx < 17 {
+			let tmpDd = tab[idx][i] * tab[idx+1][i+1] * tab[idx+2][i+2] * tab[idx+3][i+3],
+			    tmpDu = tab[idx+3][i] * tab[idx+2][i+1] * tab[idx+1][i+2] * tab[idx][i+3]
+			maxProd = maxElement([ maxProd, tmpDu, tmpDd ])
 		}
 	}
 }
-
-setMax(prodHor, &maxProd)
-setMax(prodVert, &maxProd)
-setMax(prodDiagDown, &maxProd)
-setMax(prodDiagUp, &maxProd)
 
 println(maxProd)
